@@ -6,7 +6,8 @@ from pathlib import Path
 from pactools import Comodulogram, REFERENCES
 from pactools import simulate_pac
 from scipy.fft import fft, fftfreq
-
+from scipy.ndimage import gaussian_filter1d
+from scipy.signal import butter, filtfilt
 class Plot:
     def __init__(self, addresses, *, t_start=None, t_end=None, title: str = None, file: Path = None , plot_type: str = "timeseries"):
         self.addresses = addresses
@@ -19,7 +20,8 @@ class Plot:
         return
 
     def check_path(self):
-        self.file.parent.mkdir(exist_ok=True)
+        if self.file is not None:
+            self.file.parent.mkdir(exist_ok=True)
 
     def __call__(self, t: np.array, res: list[ModelBase],**kwargs):
         if self.plot_type == "timeseries":
@@ -85,7 +87,7 @@ class Plot:
         self.save()
         return
 
-    def plot_fft(self, t:np.array, res: list[ModelBase],min_fq=1, max_fq=50):
+    def plot_fft(self, t:np.array, res: list[ModelBase],min_fq=1, max_fq=50, smoothing = None):
         t_t, traces = self.get_traces(t, res)
         s = traces[0]
         dt = t[1]-t[0]
@@ -94,7 +96,13 @@ class Plot:
         xf = fftfreq(N, dt)[:N//2]
         limit = np.where((xf<=max_fq)& (xf>=min_fq))
         yf = yf[0:N//2]
-        plt.plot(xf[limit], 2.0/N * np.abs(yf[limit]))
+        if smoothing =="MAF":
+            window_size = 5  # Adjust for more or less smoothing
+            smoothed_yf = np.convolve(2.0/N * np.abs(yf[limit]), np.ones(window_size)/window_size, mode='same')
+            plt.plot(xf[limit], smoothed_yf)
+        
+        else:
+            plt.plot(xf[limit], 2.0/N * np.abs(yf[limit]))
         self.save()
         return
     
@@ -112,7 +120,10 @@ class Plot:
         max_ind = np.argmax(y_new)
         max_freq = x_new[max_ind]
         max_freq_power = y_new[max_ind]
-        return max_freq, max_freq_power
+        power_gamma_range = sum(y_new)
+        return max_freq, max_freq_power,power_gamma_range
+        
+        
         # input between 0 and 1 and 10 values
         # average over 5 up to 20 trials
         # each trial throw away 5s and simulate for a 100s (because its gamma maybe you can do a bit shorter)

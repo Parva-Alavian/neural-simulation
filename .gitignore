@@ -130,4 +130,7 @@ dmypy.json
 
 *.out
 img/
+freq_curves/
+test/
+src/dataaa
 *.png

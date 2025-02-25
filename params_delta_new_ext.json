@@ -1,0 +1,86 @@
+{
+  "exc1.I_back.dc": {
+    "new": 0.432,
+    "old": 0.45
+  },
+  "exc2.I_back.dc": {
+    "new": 0.432,
+    "old": 0.45
+  },
+  "pv.I_back.dc": {
+    "new": 0.4,
+    "old": 0.35
+  },
+  "sst1.I_back.dc": {
+    "new": 0.35,
+    "old": 0.25
+  },
+  "sst2.I_back.dc": {
+    "new": 0.35,
+    "old": 0.25
+  },
+  "vip1.I_back.dc": {
+    "new": 0.16,
+    "old": 0.0
+  },
+  "vip2.I_back.dc": {
+    "new": 0.16,
+    "old": 0.0
+  },
+  "J.exc1.exc1": {
+    "new": 0.5,
+    "old": 0.4813
+  },
+  "J.exc1.pv": {
+    "new": -0.36,
+    "old": -0.4
+  },
+  "J.exc1.sst1": {
+    "new": -0.45,
+    "old": 0.0
+  },
+  "J.exc2.exc2": {
+    "new": 0.5,
+    "old": 0.4813
+  },
+  "J.exc2.pv": {
+    "new": -0.36,
+    "old": -0.4
+  },
+  "J.exc2.sst2": {
+    "new": -0.45,
+    "old": 0.0
+  },
+  "J.pv.exc1": {
+    "new": 0.3207385273710929,
+    "old": 0.2706412041309602
+  },
+  "J.pv.exc2": {
+    "new": 0.3207385273710929,
+    "old": 0.2706412041309602
+  },
+  "J.sst1.exc1": {
+    "new": 0.0,
+    "old": 0.35
+  },
+  "J.sst2.exc2": {
+    "new": 0.0,
+    "old": 0.35
+  },
+  "J.vip1.exc1": {
+    "new": 0.0,
+    "old": 0.45
+  },
+  "J.vip2.exc2": {
+    "new": 0.0,
+    "old": 0.45
+  },
+  "J_ampa.vip1.exc1": {
+    "new": 0.0,
+    "old": 0.25
+  },
+  "J_ampa.vip2.exc2": {
+    "new": 0.0,
+    "old": 0.25
+  }
+}
