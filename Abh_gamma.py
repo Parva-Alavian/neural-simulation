@@ -55,7 +55,6 @@ def model_MW1(z,t):
     gamma_Aa = 2.0
     gamma_Ab = 2.0
     gamma_c = 4.0
-    
     gamma_sa = 3.0
     gamma_sb = 3.0
     gamma_va = 3.0
@@ -78,7 +77,6 @@ def model_MW1(z,t):
     b = 54
     d = 0.308
     
-    J_s = 0.3213
     J_c = 0.0107
     J_ei = -0.36
     J_ii = -0.12

@@ -23,17 +23,20 @@ import os
 
 
 
-def run(t_end, changes = {}, *, dt=0.001, path:Path=None, params_set = "abh_values.json"):
+def run(t_end, changes = {}, params_set = {},*, dt=0.001,path:Path=None):
     #print(f'estimated time: {1.1 * t_end/dt / 1000} seconds')
     t_start = time.time()
     t = np.linspace(0, t_end, int(t_end / dt) + 1)
     y0 = Model()
     y0.initialize()
-    if params_set == None:
-        params = ParameterSet("smallcirtuit.json")
-    else:
-        params = ParameterSet(params_set)
-        print("Params set to", params_set)
+    if isinstance(params_set, dict):  
+        params_data = params_set  # Already a dictionary, use it directly  
+    elif isinstance(params_set, str):  
+        with open(params_set, "r", encoding="cp1252") as f:  
+            params_data = json.load(f)  # Load from file  
+    else:  
+        raise TypeError("params_set must be either a dictionary or a filename (string)")
+    params = ParameterSet(params_data)
     params.batch_update(changes)
     #params.J.print_matrix()
     #params.J_ampa.print_matrix()
@@ -146,13 +149,16 @@ def smooth_out(yf,smoothing,dt=None,**kwargs):
         
         #function to extract a plot for closing the loop
 
-def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_dir=None):
-    avg_y=[]
-    avg_x=[]
-    avg_p=[]
-    std_p=[]
+def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_dir=  None):
+    with open (params_set,"r", encoding="cp1252") as f:
+        params_data = json.load(f)
+    print("Im inside the function")
+    #avg_y=np.zeros(len(I))
+    #avg_x=np.zeros(len(I))
+    avg_p=np.zeros((len(I),3))
+    std_p=np.zeros((len(I),3))
     pows=[]
-    for i in I:    
+    for ind,i in enumerate(I):    
         experiment = {"exc1.I_back.dc": i, "exc2.I_back.dc": i}
         experiment.update(circuit_params)
         print(i)
@@ -161,38 +167,36 @@ def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_d
         pow = []    
         for j in range(sample_size):
             print(j)
-            t, res = run(30, changes = experiment , dt=0.0001, path=None, params_set=params_set)
+            t, res = run(5, changes = experiment , dt=0.001, path=None, params_set=params_data)
             x,y = spectrogram(t,res,smoothing = None,max_fq= 100)
             pow.append([*max_gamma_power(x,y)])
             xs.append(x)
             ys.append(y)
             
         pows.append(pow)    
-        avg_y.append(sum(ys)/sample_size)
-        avg_x.append(xs[0])
-        avg_p.append(np.average(np.array(pow),axis=0))
-        std_p.append(np.std(np.array(pow),axis=0)/sample_size)
+        #avg_y[ind] = (sum(ys)/sample_size)
+        #avg_x[ind] = (xs[0])
+        avg_p[ind][:] = (np.average(np.array(pow),axis=0))
+        std_p[ind][:] = (np.std(np.array(pow),axis=0)/sample_size)
         
-    avg_x = np.array(avg_x)
-    avg_y = np.array(avg_y)
-    avg_p = np.array(avg_p)
-    std_p = np.array(std_p)
-    if save_dir:
-        np.save(arr= avg_x ,file=save_dir+"/avg_x.npy")
-        np.save(arr= avg_y ,file=save_dir+"/avg_y.npy")
-        np.save(arr= avg_p ,file=save_dir+"/avg_p.npy")
-        np.save(arr= std_p ,file=save_dir+"/std_p.npy")
-        np.save(arr= I, file = save_dir+"/I.npy")
-    return avg_p,std_p,avg_x,avg_y
+        if (ind+1) %5 == 0 or ind == len(I)-1 :        
+            if save_dir:
+                #np.save(arr= avg_x ,file=save_dir+ str(ind) + "/avg_x.npy")
+                #np.save(arr= avg_y ,file=save_dir+ str(ind) + "/avg_y.npy")
+                np.save(arr= avg_p ,file=save_dir+ str(ind) + "avg_p.npy")
+                np.save(arr= std_p ,file=save_dir+ str(ind) + "std_p.npy")
+                np.save(arr= I, file = save_dir+ str(ind) + "I.npy")
+    return avg_p,std_p#,avg_x,avg_y
 
 
 # TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
 s= 0.35
 v= 0.16
 experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
-I = np.linspace(0.3,0.8,26)
-sample_size = 50
-experiment_name = "test"
-save_dir = "./freq_curves/closing_loop" + experiment_name
+I = np.linspace(0.3,0.8,6)
+sample_size = 3
+print("I'm here")
+experiment_name = "final"
+save_dir = "./freq_curves/closing_loop/" + experiment_name
 os.makedirs(save_dir, exist_ok=True)
-avg_p,std_p,avg_x,avg_y = fq_curve(I,experiment,params_set="Disconnected.json",sample_size=sample_size,save_dir=save_dir)
+avg_p,std_p = fq_curve(I,experiment,params_set="Disconnected.json",sample_size=sample_size,save_dir= save_dir)

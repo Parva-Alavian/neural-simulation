@@ -130,6 +130,7 @@ dmypy.json
 
 *.out
 img/
+snellius/
 freq_curves/
 test/
 src/dataaa
