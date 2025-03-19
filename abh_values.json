@@ -10,14 +10,14 @@
     "opto": 0.0,
     "I_back": {
       "type": "sin",
-      "amplitude": 0.1,
+      "amplitude": 0.0, 
       "frequency": 4,
       "phase": 0,
-      "dc": 0.45
+      "dc": 0.5
     },
     "I_ext": {
       "type": "rectangular",
-      "height": 0.3,
+      "height": 0.0,
       "t_start": 4.0,
       "t_end": 6.0
     }
@@ -33,10 +33,10 @@
     "opto": 0.0,
     "I_back": {
       "type": "sin",
-      "amplitude": 0.1,
+      "amplitude": 0.0,
       "frequency": 4.0,
       "phase": 0.0,
-      "dc": 0.45
+      "dc": 0.5
     },
     "I_ext": {
       "type": "rectangular",
@@ -56,7 +56,7 @@
       "amplitude": 0.0,
       "frequency": 0.0,
       "phase": 0.0,
-      "dc": 0.35
+      "dc": 0.55
     },
     "I_ext": {
       "type": "rectangular",
@@ -135,7 +135,7 @@
   },
   "J": {
     "exc1": {
-      "exc1": 0.4813,
+      "exc1": 0.5,
       "exc2": 0.0107,
       "pv": -0.36,
       "sst1": -0.45,
@@ -145,7 +145,7 @@
     },
     "exc2": {
       "exc1": 0.0107,
-      "exc2": 0.4813,
+      "exc2": 0.5,
       "pv": -0.36,
       "sst1": 0.0,
       "sst2": -0.45,
@@ -200,8 +200,8 @@
   },
   "J_ampa": {
     "exc1": {
-      "exc1": 3.04,
-      "exc2": 1.4,
+      "exc1": 3.8,
+      "exc2": 1.75,
       "pv": 0.0,
       "sst1": 0.0,
       "sst2": 0.0,
@@ -209,8 +209,8 @@
       "vip2": 0.0
     },
     "exc2": {
-      "exc1": 1.4,
-      "exc2": 3.04,
+      "exc1": 1.75,
+      "exc2": 3.8,
       "pv": 0.0,
       "sst1": 0.0,
       "sst2": 0.0,
@@ -218,8 +218,8 @@
       "vip2": 0.0
     },
     "pv": {
-      "exc1": 2.56,
-      "exc2": 2.56,
+      "exc1": 3.2,
+      "exc2": 3.2,
       "pv": 0.0,
       "sst1": 0.0,
       "sst2": 0.0,
@@ -227,7 +227,7 @@
       "vip2": 0.0
     },
     "sst1": {
-      "exc1": 0.25,
+      "exc1": 0.0,
       "exc2": 0.0,
       "pv": 0.0,
       "sst1": 0.0,
@@ -237,7 +237,7 @@
     },
     "sst2": {
       "exc1": 0.0,
-      "exc2": 0.25,
+      "exc2": 0.0,
       "pv": 0.0,
       "sst1": 0.0,
       "sst2": 0.0,

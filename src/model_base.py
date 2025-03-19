@@ -21,8 +21,8 @@ class ModelBase(State):
         self.exc2.s_ampa = 0.05
         self.sst1.s = 0.05
         self.sst2.s = 0.05
-        self.vip1.s = 0.05
-        self.vip2.s = 0.05
+        self.vip1.s = 0.15
+        self.vip2.s = 0.15
 
     def log_state(self, t: np.float64, p: ParameterSet):
         logging.debug(f'  s:       {arr2str([getattr(self,x).s for x in self.Nodes])}')
