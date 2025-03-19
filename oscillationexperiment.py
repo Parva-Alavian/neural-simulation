@@ -20,7 +20,7 @@ from scipy.fft import fft, fftfreq
 from scipy.ndimage import gaussian_filter1d
 from scipy.signal import butter, filtfilt
 import os
-
+import argparse
 
 
 def run(t_end, changes = {}, params_set = {},*, dt=0.001,path:Path=None):
@@ -149,7 +149,7 @@ def smooth_out(yf,smoothing,dt=None,**kwargs):
         
         #function to extract a plot for closing the loop
 
-def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_dir=  None):
+def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,simulation_time = 10, dt = 0.001,save_dir=  None):
     with open (params_set,"r", encoding="cp1252") as f:
         params_data = json.load(f)
     print("Im inside the function")
@@ -167,7 +167,7 @@ def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_d
         pow = []    
         for j in range(sample_size):
             print(j)
-            t, res = run(5, changes = experiment , dt=0.001, path=None, params_set=params_data)
+            t, res = run(simulation_time, changes = experiment , dt=dt, path=None, params_set=params_data)
             x,y = spectrogram(t,res,smoothing = None,max_fq= 100)
             pow.append([*max_gamma_power(x,y)])
             xs.append(x)
@@ -188,15 +188,41 @@ def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,save_d
                 np.save(arr= I, file = save_dir+ str(ind) + "I.npy")
     return avg_p,std_p#,avg_x,avg_y
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Obtain peak frequency and peak power curves")
+    parser.add_argument('--sample_size', type=int, default= 20, help="Number of simulations per data point")
+    parser.add_argument('--I_1',type = float,  help="I = np.array(I_1,I_2,n)")
+    parser.add_argument('--I_2',type = float,  help="I = np.array(I_1,I_2,n)")
+    parser.add_argument('--I_n',type = int,  help="I = np.array(I_1,I_2,n)")
+    parser.add_argument('--simulation_time',type = int, default = 10, help="length of each simulation")
+    parser.add_argument('--dt',type = float, default = 0.001, help="time interval for simulation")
+    parser.add_argument('--save_path', type=str, default="./freq_curves/closing_loop/", help="Path to save results")
+    parser.add_argument('--experiment_name', type=str, help="name of the experiment")
+    parser.add_argument('--params_set', type= str, default = "Disconnected_abh.json", help="base parameterset for the experiment")
+    return parser.parse_args()
 
-# TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
-s= 0.35
-v= 0.16
-experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
-I = np.linspace(0.3,0.8,6)
-sample_size = 3
-print("I'm here")
-experiment_name = "final"
-save_dir = "./freq_curves/closing_loop/" + experiment_name
-os.makedirs(save_dir, exist_ok=True)
-avg_p,std_p = fq_curve(I,experiment,params_set="Disconnected.json",sample_size=sample_size,save_dir= save_dir)
+def main():
+    args = parse_args()
+    
+    # TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
+    s= 0.32
+    v= 0.33
+    experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+    
+    I = np.linspace(args.I_1,args.I_2,args.I_n)
+    sample_size = args.sample_size
+    simulation_time = args.simulation_time
+    dt = args.dt
+    experiment_name = args.experiment_name
+    save_dir = args.save_path + experiment_name
+    
+    os.makedirs(save_dir, exist_ok=True)
+    
+    avg_p,std_p = fq_curve(I,experiment,params_set=args.params_set,sample_size=sample_size,simulation_time = simulation_time, dt= dt, save_dir= save_dir)
+
+    
+
+    
+    
+if __name__=="__main__":
+        main()
