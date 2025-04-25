@@ -207,7 +207,10 @@ def main():
     # TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
     s= 0.32
     v= 0.33
-    experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+    #experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+    experiment = {"J.exc1.sst1":0.0,"J.exc2.sst2":0.0, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+    # disconnect = {"J.vip1.sst1": 0.0, "J.vip2.sst2": 0.0}
+    # experiment =   disconnect 
     
     I = np.linspace(args.I_1,args.I_2,args.I_n)
     sample_size = args.sample_size
