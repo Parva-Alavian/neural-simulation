@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 *.out
+results/
 img/
 snellius/
 freq_curves/
