@@ -21,7 +21,7 @@ from scipy.ndimage import gaussian_filter1d
 from scipy.signal import butter, filtfilt
 import os
 import argparse
-
+from utils import *
 
 def run(t_end, changes = {}, params_set = {},*, dt=0.001,path:Path=None):
     #print(f'estimated time: {1.1 * t_end/dt / 1000} seconds')
@@ -41,11 +41,14 @@ def run(t_end, changes = {}, params_set = {},*, dt=0.001,path:Path=None):
     #params.J.print_matrix()
     #params.J_ampa.print_matrix()
     #print(json.dumps(params.__flat_json__(ignore_zeros=True), indent=2))
-    if path is not None:
-        params.save(path / 'params.json')
-        params.saveDelta(path / 'params_delta.json',base_file='structure.json')
-        params.saveDeltaHtml(path / 'params_delta.html',base_file='structure.json')
-        params.saveHtml(path / 'params.html',keys = [])
+    # param_dict =params.__flat_json__()
+    # print(param_dict["exc1.I_back.dc"],param_dict["exc1.I_back.dc"],param_dict["J.exc1.exc2"])
+    #print(params.getDelta(base_file= path/"param.json"))
+    # if path is not None:
+    #     params.save(path / 'params.json')
+    #     params.saveDelta(path / 'params_delta.json',base_file='structure.json')
+    #     params.saveDeltaHtml(path / 'params_delta.html',base_file='structure.json')
+    #     params.saveHtml(path / 'params.html',keys = [])
 
     def calc_g_static():
       sigma = y0.serialize_g(params)
@@ -80,79 +83,13 @@ def run(t_end, changes = {}, params_set = {},*, dt=0.001,path:Path=None):
     #print(f'elapsed time: {t_end - t_start} seconds')
     return t, list(map(toState, res))
 
-def lowpass_filter(data, cutoff, fs, order=4):
-    nyquist = 0.5 * fs
-    normal_cutoff = cutoff / nyquist
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    return filtfilt(b, a, data)
 
-def max_gamma_power(xf,yf, min_fq=15, max_fq=50):
-    limit = np.where((xf<=max_fq)& (xf>=min_fq))
-    x_new= xf[limit]
-    y_new = yf[limit]
-    max_ind = np.argmax(y_new)
-    max_freq = x_new[max_ind]
-    max_freq_power = y_new[max_ind]
-    
-    power_gamma_range = sum(y_new)
-    return max_freq, max_freq_power,power_gamma_range
-
-def spectrogram( t:np.array, res: list[ModelBase],min_fq=1, max_fq=100, smoothing = None, t_start = 1, t_end=None, **kwargs):
-    obj = Plot(['exc1.r'],t_start = t_start, t_end=t_end)
-    t_t, traces = obj.get_traces(t, res)
-    s = traces[0]
-    dt = t[1]-t[0]
-    N = len(s)
-    yf = fft(s)
-    xf = fftfreq(N, dt)[:N//2]
-    limit = np.where((xf<=max_fq)& (xf>=min_fq))
-    yf = yf[0:N//2]
-    if smoothing =="MAF":
-        try:
-            window_size = kwargs["w"]  # Adjust for more or less smoothing
-        except: 
-            window_size = 5
-            print("window_size not provided. using default value 5")
-        smoothed_yf = np.convolve(2.0/N * np.abs(yf[limit]), np.ones(window_size)/window_size, mode='same')
-
-    elif smoothing =="Gauss":
-        sigma = 2  # Adjust for more or less smoothing
-        smoothed_yf = gaussian_filter1d(2.0/N * np.abs(yf[limit]), sigma)
-
-    elif smoothing=="low pass":        
-        fs = 1/dt  # Sampling frequency
-        cutoff_freq = 10  # Adjust this based on noise level
-        smoothed_yf = lowpass_filter(2.0/N * np.abs(yf[limit]), cutoff_freq, fs)
-
-    else:
-        smoothed_yf = 2.0/N * np.abs(yf[limit])
-    return xf[limit],smoothed_yf
-
-def smooth_out(yf,smoothing,dt=None,**kwargs):
-    if smoothing =="MAF":
-        try:
-            window_size = kwargs["w"]  # Adjust for more or less smoothing
-        except: 
-            window_size = 5
-            print("window_size not provided. using default value 5")
-        smoothed_yf = np.convolve(yf, np.ones(window_size)/window_size, mode='same')
-
-    elif smoothing =="Gauss":
-        sigma = 2  # Adjust for more or less smoothing
-        smoothed_yf = gaussian_filter1d(yf, sigma)
-
-    elif smoothing=="low pass":        
-        fs = 1/dt  # Sampling frequency
-        cutoff_freq = 10  # Adjust this based on noise level
-        smoothed_yf = lowpass_filter(yf, cutoff_freq, fs)
-    return smoothed_yf
         
         #function to extract a plot for closing the loop
 
-def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,simulation_time = 10, dt = 0.001,save_dir=  None):
+def fq_curve(I,params_set,sample_size=30,simulation_time = 10, dt = 0.001,save_dir=  None):
     with open (params_set,"r", encoding="cp1252") as f:
         params_data = json.load(f)
-    print("Im inside the function")
     #avg_y=np.zeros(len(I))
     #avg_x=np.zeros(len(I))
     avg_p=np.zeros((len(I),3))
@@ -160,7 +97,6 @@ def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,simula
     pows=[]
     for ind,i in enumerate(I):    
         experiment = {"exc1.I_back.dc": i, "exc2.I_back.dc": i}
-        experiment.update(circuit_params)
         print(i)
         xs =[]
         ys=[]
@@ -178,14 +114,13 @@ def fq_curve(I,circuit_params,params_set="ExtendedV1.json",sample_size=30,simula
         #avg_x[ind] = (xs[0])
         avg_p[ind][:] = (np.average(np.array(pow),axis=0))
         std_p[ind][:] = (np.std(np.array(pow),axis=0)/sample_size)
-        
         if (ind+1) %5 == 0 or ind == len(I)-1 :        
             if save_dir:
                 #np.save(arr= avg_x ,file=save_dir+ str(ind) + "/avg_x.npy")
                 #np.save(arr= avg_y ,file=save_dir+ str(ind) + "/avg_y.npy")
-                np.save(arr= avg_p ,file=save_dir+ str(ind) + "avg_p.npy")
-                np.save(arr= std_p ,file=save_dir+ str(ind) + "std_p.npy")
-                np.save(arr= I, file = save_dir+ str(ind) + "I.npy")
+                np.save(arr= avg_p ,file=save_dir / f'{ind}avg_p.npy')
+                np.save(arr= std_p ,file=save_dir / f'{ind}std_p.npy')
+                np.save(arr= I, file = save_dir   / f'{ind}I.npy')
     return avg_p,std_p#,avg_x,avg_y
 
 def parse_args():
@@ -196,35 +131,58 @@ def parse_args():
     parser.add_argument('--I_n',type = int,  help="I = np.array(I_1,I_2,n)")
     parser.add_argument('--simulation_time',type = int, default = 10, help="length of each simulation")
     parser.add_argument('--dt',type = float, default = 0.001, help="time interval for simulation")
-    parser.add_argument('--save_path', type=str, default="./freq_curves/closing_loop/", help="Path to save results")
+    parser.add_argument('--save_path', type=str, default="./results/", help="Path to save results")
     parser.add_argument('--experiment_name', type=str, help="name of the experiment")
     parser.add_argument('--params_set', type= str, default = "Disconnected_abh.json", help="base parameterset for the experiment")
     return parser.parse_args()
 
 def main():
-    args = parse_args()
+    args= parse_args()
     
-    # TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
-    s= 0.32
-    v= 0.33
-    #experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
-    experiment = {"J.exc1.sst1":0.0,"J.exc2.sst2":0.0, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
-    # disconnect = {"J.vip1.sst1": 0.0, "J.vip2.sst2": 0.0}
-    # experiment =   disconnect 
+    dt = datetime.now()
+    folder = Path(f'results/{args.experiment_name}/{dt.strftime("%Y-%m-%d")}/{dt.strftime("%H%M%S")}')
+    folder.mkdir(parents=True)
     
+    # opens the based parameter set, makes the changes necessary for the circuit that is being experimented with and saves it
+    with open (args.params_set,"r", encoding="cp1252") as f:
+        params_data = json.load(f)
+    params = ParameterSet(params_data)
+    circuit_params = {"J.exc1.exc2":1.0}
+    params.batch_update(circuit_params)
+    params.save(folder/'params.json')
+
     I = np.linspace(args.I_1,args.I_2,args.I_n)
     sample_size = args.sample_size
     simulation_time = args.simulation_time
     dt = args.dt
-    experiment_name = args.experiment_name
-    save_dir = args.save_path + experiment_name
     
-    os.makedirs(save_dir, exist_ok=True)
+    avg_p,std_p = fq_curve(I,params_set=folder/"params.json",sample_size=sample_size,simulation_time = simulation_time, dt= dt, save_dir= folder)
     
-    avg_p,std_p = fq_curve(I,experiment,params_set=args.params_set,sample_size=sample_size,simulation_time = simulation_time, dt= dt, save_dir= save_dir)
-
+# def main():
+#     args = parse_args()
     
-
+#     # TODO: save the files at the right spot, save the relevant parameters as well, pass the parameters from script,  later: connect to wandb maybe?
+#     s= 0.32
+#     v= 0.33
+#     #experiment = {"sst1.I_back.dc":s,"sst2.I_back.dc":s,"vip1.I_back.dc":v,"vip2.I_back.dc":v, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+#     experiment = {"J.exc1.sst1":0.0,"J.exc2.sst2":0.0, "J_ampa.vip1.exc1":0, "J_ampa.vip2.exc2":0}
+#     # disconnect = {"J.vip1.sst1": 0.0, "J.vip2.sst2": 0.0}
+#     # experiment =   disconnect 
+#     dt = datetime.now()
+#     folder = Path(f'results/{dt.strftime("%Y-%m-%d")}/{args.experiment_name}/{dt.strftime("%H%M%S")}')
+#     print(str(folder))
+#     #folder = Path(f'img/{exp}/{dt.strftime("%Y-%m-%d")}/highampa_theta')
+#     folder.mkdir(parents=True)
+#     I = np.linspace(args.I_1,args.I_2,args.I_n)
+#     sample_size = args.sample_size
+#     simulation_time = args.simulation_time
+#     dt = args.dt
+#     # experiment_name = args.experiment_name
+#     # save_dir = args.save_path + experiment_name
+    
+#     #os.makedirs(save_dir, exist_ok=True)
+    
+#     avg_p,std_p = fq_curve(I,circuit_params=experiment,params_set=args.params_set,sample_size=sample_size,simulation_time = simulation_time, dt= dt, save_dir= str(folder))
     
     
 if __name__=="__main__":
